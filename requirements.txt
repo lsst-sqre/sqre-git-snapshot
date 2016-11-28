@@ -1,5 +1,7 @@
 github3.py==1.0.0a4
-requests>=2.8.1
-gitpython
-progressbar
-awscli
+requests==2.8.1
+gitpython==1.0.1
+progressbar2==3.11.0
+awscli==1.11.21
+sqre-codekit==1.0.0
+MapGitConfig==1.1

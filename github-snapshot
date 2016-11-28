@@ -1,37 +1,55 @@
 #!/usr/bin/env python
+'''Snapshot all GitHub repos for specified orgs to S3'''
+# pylint: disable=C0103
+# That's about "github-snapshot" isn't a legal module name.
 # Requires python 2 for Codekit.
 # Requires github3 v1.0 for repository iteration.
-#  git isn't buying us anything but a wrapper around subprocess and the
+# git isn't buying us anything but a wrapper around subprocess and the
 #  git executable.  Consider dropping it.
+from __future__ import print_function
 import argparse
-import tempfile
-import progressbar
 import os
+import os.path
 import sys
-import time
 import datetime
 import subprocess
-import shutil
-import os.path
 import github3
 import git
+import progressbar
 from codekit import codetools
 
 
-class report_repo():
+class ReportRepo(object):
     '''Class to provide progressbar widget with current repo name.'''
 
-    current_repo = ''
-    max_length = 0
+    _current_repo = ''
+    _max_length = 0
 
     def __init__(self):
         pass
 
     def __call__(self, progress, data):
-        return self.current_repo.ljust(self.max_length)
+        return self._current_repo.ljust(self._max_length)
+
+    def set_current_repo(self, arg):
+        '''Set current repo name'''
+        self._current_repo = arg
+
+    def get_current_repo(self):
+        '''Get current repo name'''
+        return self._current_repo
+
+    def set_max_length(self, mlen):
+        '''Set maximum length of org+repo'''
+        self._max_length = mlen
+
+    def get_max_length(self):
+        '''Get maximum length of org+repo'''
+        return self._max_length
 
 
 def parse_args():
+    '''Parse command-line arguments'''
     parser = argparse.ArgumentParser(
         description="Clone repositories in LSST orgs")
     parser.add_argument("-d", "--debug", action="store_true",
@@ -41,10 +59,12 @@ def parse_args():
                         " [ $GITHUB_ORGS | lsst,lsst-sqre,lsst-dm ]")
     parser.add_argument("-a", "--access-key", "--aws-access-key",
                         "--aws-access-key-id",
-                        help="AWS access key ID [ $AWS_ACCESS_KEY_ID]")
+                        help="AWS access key ID [ $AWS_ACCESS_KEY_ID | " +
+                        "<from instance metadata> ]")
     parser.add_argument("-s", "--secret-access-key", "--aws-secret-access-key",
                         "--secret-key", "--aws-secret-key",
-                        help="AWS secret key [ $AWS_SECRET_ACCESS_KEY]")
+                        help="AWS secret key [ $AWS_SECRET_ACCESS_KEY | ]" +
+                        "<from instance metadata> ]")
     parser.add_argument("-r", "--region", "--default-region",
                         "--aws-default-region",
                         help="AWS default region [ $AWS_DEFAULT_REGION | " +
@@ -68,12 +88,8 @@ def parse_args():
     results.organizations = results.organizations.split(',')
     if not results.access_key:
         results.access_key = add_defaults("AWS_ACCESS_KEY_ID")
-    if not results.access_key:
-        raise EnvironmentException("Cannot proceed without AWS Access Key")
     if not results.secret_access_key:
         results.secret_access_key = add_defaults("AWS_SECRET_ACCESS_KEY")
-    if not results.secret_access_key:
-        raise EnvironmentException("Cannot proceed without AWS Secret Key")
     if not results.region:
         results.region = add_defaults("AWS_DEFAULT_REGION")
         if not results.region:
@@ -87,23 +103,27 @@ def parse_args():
         if not results.token_file:
             results.token_file = os.path.expanduser('~/.sq_github_token')
             try:
-                with open(results.token_file) as fd:
-                    results.token = fd.readline().strip()
-            except FileNotFoundError as e:
-                print(e)
+                with open(results.token_file) as fdc:
+                    results.token = fdc.readline().strip()
+            except IOError as exc:
+                print(exc)
     return results
 
 
 def add_defaults(envvar, fallback=None):
+    '''Set variable default from environment or fallback value'''
     if envvar in os.environ:
         return os.environ[envvar]
     return fallback
 
 
 def backup_repos(args):
-    if args.token:
+    '''Back up repositories'''
+    retval = True
+    session = None
+    if "token" in args and args.token:
         session = codetools.login_github(token=args.token)
-        # FIXME: Need to figure out git-lfs.
+        # Still need to figure out git-lfs.
     else:
         session = github3.github.GitHub()  # Unauthenticated, probably
         #  will hit rate-limit.
@@ -113,25 +133,31 @@ def backup_repos(args):
         repocount += len(cloneurls[oname])
     maxlength = get_reponamelen(cloneurls)
 
-    reporep = report_repo()
-    reporep.max_length = maxlength
-    widgets = [reporep, ' | ', progressbar.ETA(), ' ', progressbar.Bar()]
+    reporep = ReportRepo()
+    reporep.set_max_length(maxlength)
     pbar = progressbar.ProgressBar(
-        widgets=widgets, max_value=repocount).start()
+        widgets=[reporep, ' | ', progressbar.ETA(), ' ', progressbar.Bar()],
+        max_value=repocount).start()
     urlcount = 0
 
     for org in cloneurls:
         for url in cloneurls[org]:
             rname = url.split('/')[-1][:-4]
-            reporep.current_repo = (org + "/" + rname)
+            reporep.set_current_repo(org + "/" + rname)
             urlcount += 1
             pbar.update(urlcount)
             with codetools.TempDir() as tempdir:
-                clone_repo(url, tempdir)
-                stash_repo(args, org, url, tempdir)
+                retcode = clone_repo(url, tempdir)
+                if retcode is False:
+                    retval = False
+                retcode = stash_repo(args, org, tempdir)
+                if retcode is None or retcode != 0:
+                    retval = False
+    return retval
 
 
 def get_reponamelen(urls):
+    '''Determine maximum length of org+repo name'''
     maxlength = 0
     for oname in urls:
         for nnm in urls[oname]:
@@ -142,43 +168,53 @@ def get_reponamelen(urls):
     return maxlength
 
 
-def set_currentrepo(name):
-    global currentrepo
-    currentrepo = name
-
-
 def clone_repo(url, tempdir):
+    '''Clone repository from URL'''
     rname = url.split('/')[-1][:-4]
+    retval = True
     try:
         git.Repo.clone_from(url, tempdir + "/" + rname)
-    except git.GitCommandError as e:
-        print("Exception: %s" % e)
+    except git.GitCommandError as exc:
+        print("Exception: %s" % exc)
+        retval = False
+    return retval
 
 
-def stash_repo(args, org, url, tempdir):
+def stash_repo(args, org, tempdir):
+    '''Store repository snapshot'''
     # Eventually we'd like to store this with Nebula.
-    stash_repo_amz(args, org, url, tempdir)
+    return stash_repo_amz(args, org, tempdir)
 
 
-def stash_repo_amz(args, org, url, tempdir):
+def stash_repo_amz(args, org, tempdir):
+    '''Store repository snapshot in S3'''
     # We could do this with boto rather than subprocess, but then we'd
     #  have to implement our own recursive upload method.
-    access = args.access_key
-    secret = args.secret_access_key
-    region = args.region
     env = os.environ.copy()
-    env["AWS_ACCESS_KEY_ID"] = access
-    env["AWS_SECRET_ACCESS_KEY"] = secret
+    #
+    # If these aren't set, the AWS CLI may be able to figure it out
+    #  anyway, if we happen to be running from an instance with an
+    #  appropriate IAM role set.  See
+    #  https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/\
+    #   iam-roles-for-amazon-ec2.html#instance-metadata-security-credentials
+    #
+    if "access_key" in args and args.access_key:
+        env["AWS_ACCESS_KEY_ID"] = args.access_key
+    if "secret_access_key" in args and args.secret_access_key:
+        env["AWS_SECRET_ACCESS_KEY"] = args.secret_access_key
+    region = args.region
     env["AWS_DEFAULT_REGION"] = region
     datestr = datetime.date.today().isoformat()
     bucket = "s3://%s/%s/%s/" % (args.bucket, datestr, org)
-    FNULL = open(os.devnull, 'w')
+    fnull = open(os.devnull, 'w')
     cmd = ["aws", "s3", "cp", tempdir + "/", bucket, "--recursive"]
-    p1 = subprocess.Popen(cmd, env=env, stdout=FNULL)  # Keep stderr.
-    p1.wait()
+    sp1 = subprocess.Popen(cmd, env=env, stdout=fnull)  # Keep stderr.
+    sp1.wait()
+    return sp1.returncode
 
 
 def get_clone_urls(session, args):
+    '''Get clone URLs for repositories'''
     cloneurls = {}
     for orgname in args.organizations:
         org = session.organization(orgname)
@@ -189,8 +225,11 @@ def get_clone_urls(session, args):
 
 
 def main():
+    '''Main entry point'''
     args = parse_args()
-    backup_repos(args)
+    retval = backup_repos(args)
+    if not retval:
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
