@@ -120,7 +120,6 @@ def backup_repos(args):
     session = None
     if "token" in args and args.token:
         session = codetools.login_github(token=args.token)
-        # Still need to figure out git-lfs.
     else:
         session = github3.github.GitHub()  # Unauthenticated, probably
         #  will hit rate-limit.
@@ -170,10 +169,17 @@ def clone_repo(url, tempdir):
     env = os.environ.copy()
     fnull = open(os.devnull, 'w')
     rname = url.split('/')[-1]
-    cmd = ["git", "clone", "-q", "--mirror", url, tempdir + "/" + rname]
+    wdir = tempdir + "/" + rname
+    cmd = ["git", "clone", "-q", "--mirror", url, wdir]
     sp1 = subprocess.Popen(cmd, env=env, stdin=fnull, stdout=fnull)
     # Keep stderr.
     sp1.wait()
+    cmd2 = ["git", "lfs", "fetch", "--all"]
+    sp2 = subprocess.Popen(cmd2, env=env, stdin=fnull, stdout=fnull,
+                           cwd=wdir)
+    sp2.wait()
+    if sp1.returncode == 0:
+        return sp2.returncode
     return sp1.returncode
 
 
