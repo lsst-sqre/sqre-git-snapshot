@@ -4,8 +4,6 @@
 # That's about "github-snapshot" isn't a legal module name.
 # Requires python 2 for Codekit.
 # Requires github3 v1.0 for repository iteration.
-# git isn't buying us anything but a wrapper around subprocess and the
-#  git executable.  Consider dropping it.
 from __future__ import print_function
 import argparse
 import os
@@ -14,7 +12,6 @@ import sys
 import datetime
 import subprocess
 import github3
-import git
 import progressbar
 from codekit import codetools
 
@@ -170,14 +167,14 @@ def get_reponamelen(urls):
 
 def clone_repo(url, tempdir):
     '''Clone repository from URL'''
-    rname = url.split('/')[-1][:-4]
-    retval = True
-    try:
-        git.Repo.clone_from(url, tempdir + "/" + rname)
-    except git.GitCommandError as exc:
-        print("Exception: %s" % exc)
-        retval = False
-    return retval
+    env = os.environ.copy()
+    fnull = open(os.devnull, 'w')
+    rname = url.split('/')[-1]
+    cmd = ["git", "clone", "-q", "--mirror", url, tempdir + "/" + rname]
+    sp1 = subprocess.Popen(cmd, env=env, stdin=fnull, stdout=fnull)
+    # Keep stderr.
+    sp1.wait()
+    return sp1.returncode
 
 
 def stash_repo(args, org, tempdir):
@@ -208,7 +205,8 @@ def stash_repo_amz(args, org, tempdir):
     bucket = "s3://%s/%s/%s/" % (args.bucket, datestr, org)
     fnull = open(os.devnull, 'w')
     cmd = ["aws", "s3", "cp", tempdir + "/", bucket, "--recursive"]
-    sp1 = subprocess.Popen(cmd, env=env, stdout=fnull)  # Keep stderr.
+    sp1 = subprocess.Popen(cmd, env=env, stdin=fnull, stdout=fnull)
+    # Keep stderr.
     sp1.wait()
     return sp1.returncode
 
