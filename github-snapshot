@@ -60,7 +60,7 @@ def parse_args():
                         "<from instance metadata> ]")
     parser.add_argument("-s", "--secret-access-key", "--aws-secret-access-key",
                         "--secret-key", "--aws-secret-key",
-                        help="AWS secret key [ $AWS_SECRET_ACCESS_KEY | ]" +
+                        help="AWS secret key [ $AWS_SECRET_ACCESS_KEY | " +
                         "<from instance metadata> ]")
     parser.add_argument("-r", "--region", "--default-region",
                         "--aws-default-region",
