@@ -5,13 +5,14 @@ import codecs
 import setuptools
 
 
-PACKAGENAME = 'sqre-github-snapshots'
+PACKAGENAME = 'sqre-github-snapshot'
 DESCRIPTION = 'LSST Data Management SQuaRE Github Organization Snapshotter'
 AUTHOR = 'Adam Thornton'
 AUTHOR_EMAIL = 'athornton@lsst.org'
 URL = 'https://github.com/lsst-sqre/sqre-github-snapshots/'
 VERSION = '0.1.0'
 LICENSE = 'MIT'
+
 
 def read(filename):
     '''Convenience function to do, basically, an include'''
@@ -45,7 +46,7 @@ setuptools.setup(
         'awscli==1.11.21',
         'sqre-codekit==1.0.1',
         'MapGitConfig==1.1',
-        'uritemplate.py==2.0.0' # Ugh.  Not pulled in by codekit.
+        'uritemplate.py==2.0.0'  # Ugh.  Not pulled in by codekit.
     ],
     entry_points={
         'console_scripts': [
