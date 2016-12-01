@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 '''Snapshot all public GitHub repos for specified orgs to S3'''
-# pylint: disable=C0103
-# That's about "github-snapshot" isn't a legal module name.
 # Requires python 2 for codekit.
 # Requires github3 v1.0 for repository iteration.
 from __future__ import print_function
@@ -14,6 +12,7 @@ import subprocess
 import github3
 import progressbar
 from codekit import codetools
+from .arg_defaulter import add_defaults
 
 
 class ReportRepo(object):
@@ -109,13 +108,6 @@ def parse_args():
             except IOError as exc:
                 print(exc)
     return results
-
-
-def add_defaults(envvar, fallback=None):
-    '''Set variable default from environment or fallback value'''
-    if envvar in os.environ:
-        return os.environ[envvar]
-    return fallback
 
 
 def backup_repos(args):

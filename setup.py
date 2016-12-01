@@ -44,7 +44,8 @@ setuptools.setup(
         'progressbar2==3.11.0',
         'awscli==1.11.21',
         'sqre-codekit==1.0.1',
-        'MapGitConfig==1.1'
+        'MapGitConfig==1.1',
+        'uritemplate.py==2.0.0' # Ugh.  Not pulled in by codekit.
     ],
     entry_points={
         'console_scripts': [

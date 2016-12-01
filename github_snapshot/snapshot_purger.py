@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 '''Purge old backups'''
-# pylint: disable=C0103
-# That's about "github-snapshot" isn't a legal module name.
 # Requires python 2 for codekit.
 # Requires github3 v1.0 for repository iteration.
 from __future__ import print_function
@@ -12,6 +10,7 @@ import sys
 import datetime
 import subprocess
 import progressbar
+from .arg_defaulter import add_defaults
 
 
 class ReportDir(object):
@@ -68,13 +67,6 @@ def parse_args():
         results.bucket = add_defaults("S3_BACKUP_BUCKET",
                                       "lsst-github-backups")
     return results
-
-
-def add_defaults(envvar, fallback=None):
-    '''Set variable default from environment or fallback value'''
-    if envvar in os.environ:
-        return os.environ[envvar]
-    return fallback
 
 
 def purge_snapshots(args):
