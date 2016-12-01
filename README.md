@@ -51,7 +51,8 @@ Removes old snapshots.  Retention criteria are:
    `ln -s ../git/sqre-git-snapshot/github-snapshot`  
    `ln -s ../git/sqre-git-snapshot/snapshot-purger`  
    `cd`  
-   ```cat << 'EOF' >> .bashrc
+```
+cat << 'EOF' >> .bashrc
 if [ -f /usr/bin/virtualenvwrapper.sh ] && [ -z "${VIRTUAL_ENV}" ]; then
     WORKON_HOME=${HOME}/Venvs
     export WORKON_HOME
@@ -62,7 +63,8 @@ fi
 if [ -f "${HOME}/gh-snap/lsst-shellfuncs.bash" ]; then
     source "${HOME}/gh-snap/lsst-shellfuncs.bash"
 fi
-EOF```
+EOF
+```
     Log out and back in.
 5. `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
    `cd gh-snap`  
@@ -108,7 +110,7 @@ fi
 EOF
 ```
    `chmod 0755 run_as_cronjob`  
-   set EDITOR if you don't like `vi`  
+   set `$EDITOR` if you don't like `vi`  
    `crontab -e`  
    Add the following:  
 ```
