@@ -66,7 +66,7 @@ EOF```
     Log out and back in.
 5. `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
    `cd gh-snap`  
-   ```cat << 'EOF' > run_as_cronjob
+```cat << 'EOF' > run_as_cronjob
 #!/bin/bash
 action=$1
 case $action in
@@ -109,7 +109,7 @@ EOF```
    set EDITOR if you don't like `vi`  
    `crontab -e`  
    Add the following:  
-   ```# Take backup snapshots every night at 12:23 AM
+```# Take backup snapshots every night at 12:23 AM
 # Purge old backups every night at 4:46 AM
 
 23 0 * * * /home/centos/gh-snap/run_as_cronjob snap
