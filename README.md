@@ -22,16 +22,21 @@ Removes old snapshots.  Retention criteria are:
 
 ## Installation
 
-* Create a New t2.micro (or whatever, but micro's plenty big) in us-west-2 using
-   ami-d2c924b2. It needs IAM role "github-snapshot-s3-access".  Give it
-   30GB of SSD as root (you only really need enough for one repository
-   at a time, so larger-than-the- biggest-repository is good enough, but
-   you're not charged extra (I think) for 30GB or less).  SSH is the
-   only port it needs open.
-* Associate an EIP with it.
+* In the AWS console:
+    * Create a new `t2.micro` (or whatever, but micro's plenty big) in
+      `us-west-2` using `ami-d2c924b2`.
+    * It needs IAM role `github-snapshot-s3-access`.
+    * Give it 30GB of SSD as root (you only really need enough for one
+      repository at a time, so more-free-space-than-the-biggest-repository
+      is good enough, but you're not charged extra (I think) for 30GB or
+      less).
+    * SSH is the only port it needs open.
+    * Launch it.
+    * Associate an EIP with it.
+    * (optional) Add a DNS record for that EIP
 * Once it comes up, log in as centos, and then:
    `sudo -i`  
-   `hostnamectl ghsnap.codes.llst # Or whatever`  
+   `hostnamectl ghsnap.codes.llst # Or whatever you called it`  
    `yum update -y`  
    `yum install -y epel-release && yum repolist`  
    `yum install -y git python-pip python-virtualenvwrapper jq`  
@@ -41,7 +46,7 @@ Removes old snapshots.  Retention criteria are:
    `bash ./install-git-lfs-repo.sh`  
    `yum -y install git-lfs-1.5.2-1.el7.x86_64`  
    Reboot.
-* Once up, log in as centos, and then:  
+* Once it is up again, log in as centos, and then:  
    `mkdir Venvs gh-snap git`  
    `cd git`  
    `git clone https://github.com/lsst-sqre/sqre-git-snapshot.git`  
@@ -121,4 +126,3 @@ EOF
 23 0 * * * /home/centos/gh-snap/run_as_cronjob snap
 46 4 * * * /home/centos/gh-snap/run_as_cronjob purge
 ```
-* (optional) Create a DNS record for the host.
