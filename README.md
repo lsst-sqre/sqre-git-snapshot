@@ -22,14 +22,14 @@ Removes old snapshots.  Retention criteria are:
 
 ## Installation
 
-1. New t2.micro (or whatever, but micro's plenty big) in us-west-2 using
+* Create a New t2.micro (or whatever, but micro's plenty big) in us-west-2 using
    ami-d2c924b2. It needs IAM role "github-snapshot-s3-access".  Give it
    30GB of SSD as root (you only really need enough for one repository
    at a time, so larger-than-the- biggest-repository is good enough, but
    you're not charged extra (I think) for 30GB or less).  SSH is the
    only port it needs open.
-2. Associate an EIP with it.
-3. Once it comes up, log in as centos, and then:
+* Associate an EIP with it.
+* Once it comes up, log in as centos, and then:
    `sudo -i`  
    `hostnamectl ghsnap.codes.llst # Or whatever`  
    `yum update -y`  
@@ -41,7 +41,7 @@ Removes old snapshots.  Retention criteria are:
    `bash ./install-git-lfs-repo.sh`  
    `yum -y install git-lfs-1.5.2-1.el7.x86_64`  
    Reboot.
-4. Once up, log in as centos:
+* Once up, log in as centos, and then:  
    `mkdir Venvs gh-snap git`  
    `cd git`  
    `git clone https://github.com/lsst-sqre/sqre-git-snapshot.git`  
@@ -51,7 +51,7 @@ Removes old snapshots.  Retention criteria are:
    `ln -s ../git/sqre-git-snapshot/github-snapshot`  
    `ln -s ../git/sqre-git-snapshot/snapshot-purger`  
    `cd`  
-```
+```bash
 cat << 'EOF' >> .bashrc
 if [ -f /usr/bin/virtualenvwrapper.sh ] && [ -z "${VIRTUAL_ENV}" ]; then
     WORKON_HOME=${HOME}/Venvs
@@ -65,10 +65,10 @@ if [ -f "${HOME}/gh-snap/lsst-shellfuncs.bash" ]; then
 fi
 EOF
 ```
-    Log out and back in.
-5. `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
-   `cd gh-snap`  
-```
+* Log out and back in.  Then:  
+  `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
+  `cd gh-snap`  
+```bash
 cat << 'EOF' > run_as_cronjob
 #!/bin/bash
 action=$1
@@ -109,6 +109,7 @@ else
 fi
 EOF
 ```
+* Install cron job:    
    `chmod 0755 run_as_cronjob`  
    set `$EDITOR` if you don't like `vi`  
    `crontab -e`  
@@ -120,4 +121,4 @@ EOF
 23 0 * * * /home/centos/gh-snap/run_as_cronjob snap
 46 4 * * * /home/centos/gh-snap/run_as_cronjob purge
 ```
-6. (optional) Create a DNS record for the host.
+* (optional) Create a DNS record for the host.
