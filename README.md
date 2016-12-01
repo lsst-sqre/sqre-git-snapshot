@@ -34,19 +34,19 @@ Removes old snapshots.  Retention criteria are:
     * Launch it.
     * Associate an EIP with it.
     * (optional) Add a DNS record for that EIP
-* Once it comes up, log in as centos, and then:
+* Once it comes up, log in as `centos`, and then:
    `sudo -i`  
-   `hostnamectl ghsnap.codes.llst # Or whatever you called it`  
+   `hostnamectl set-hostname ghsnap.lsst.codes # Or whatever you called it`  
    `yum update -y`  
    `yum install -y epel-release && yum repolist`  
    `yum install -y git python-pip python-virtualenvwrapper jq`  
-   `yum install emacs-nox # If you're not a barbarian`  
+   `yum install -y emacs-nox # If you're not a barbarian`  
    `curl -s https://packagecloud.io/install/repositories/github/git-lfs/script.rpm.sh -o install-git-lfs-repo.sh`  
    Examine `install-git-lfs-repo.sh` until you're sure it's not nefarious.  
    `bash ./install-git-lfs-repo.sh`  
    `yum -y install git-lfs-1.5.2-1.el7.x86_64`  
    Reboot.
-* Once it is up again, log in as centos, and then:  
+* Once it is up again, log in as `centos`, and then:  
    `mkdir Venvs gh-snap git`  
    `cd git`  
    `git clone https://github.com/lsst-sqre/sqre-git-snapshot.git`  
@@ -70,7 +70,7 @@ if [ -f "${HOME}/gh-snap/lsst-shellfuncs.bash" ]; then
 fi
 EOF
 ```
-* Log out and back in.  Then:  
+* Log out and back in (as `centos` still).  Then:  
   `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
   `cd gh-snap`  
 ```bash
