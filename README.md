@@ -49,12 +49,9 @@ Removes old snapshots.  Retention criteria are:
 * Once it is up again, log in as `centos`, and then:  
    `mkdir Venvs gh-snap git`  
    `cd git`  
-   `git clone https://github.com/lsst-sqre/sqre-git-snapshot.git`  
    `git clone https://github.com/lsst-sqre/shelltools.git`  
    `cd ../gh-snap`  
-   `ln -s ../git/shelltools/lsst-shellfuncs.bash`  
-   `ln -s ../git/sqre-git-snapshot/github-snapshot`  
-   `ln -s ../git/sqre-git-snapshot/snapshot-purger`  
+   `ln -s ../git/shelltools/lsst-shellfuncs.bash`    
    `cd`  
 ```bash
 cat << 'EOF' >> .bashrc
@@ -71,7 +68,8 @@ fi
 EOF
 ```
 * Log out and back in (as `centos` still).  Then:  
-  `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
+  `mkvirtualenv github-snapshot`  
+  `pip install sqre-github-snapshot`  
   `cd gh-snap`  
 ```bash
 cat << 'EOF' > run_as_cronjob
@@ -108,9 +106,9 @@ check_github_lfs
 set_aws_variables
 
 if [ "${action}" == "purge" ]; then
-    ${HOME}/gh-snap/snapshot-purger
+    snapshot-purger
 else
-    ${HOME}/gh-snap/github-snapshot
+    github-snapshot
 fi
 EOF
 ```
