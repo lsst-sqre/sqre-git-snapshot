@@ -66,7 +66,8 @@ EOF```
     Log out and back in.
 5. `mkvirtualenv -r ~/git/sqre-git-snapshot/requirements.txt github-snapshot`  
    `cd gh-snap`  
-```cat << 'EOF' > run_as_cronjob
+```
+cat << 'EOF' > run_as_cronjob
 #!/bin/bash
 action=$1
 case $action in
@@ -104,14 +105,17 @@ if [ "${action}" == "purge" ]; then
 else
     ${HOME}/gh-snap/github-snapshot
 fi
-EOF```
+EOF
+```
    `chmod 0755 run_as_cronjob`  
    set EDITOR if you don't like `vi`  
    `crontab -e`  
    Add the following:  
-```# Take backup snapshots every night at 12:23 AM
+```
+# Take backup snapshots every night at 12:23 AM
 # Purge old backups every night at 4:46 AM
 
 23 0 * * * /home/centos/gh-snap/run_as_cronjob snap
-46 4 * * * /home/centos/gh-snap/run_as_cronjob purge```
+46 4 * * * /home/centos/gh-snap/run_as_cronjob purge
+```
 6. (optional) Create a DNS record for the host.
