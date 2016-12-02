@@ -22,6 +22,8 @@ Removes old snapshots.  Retention criteria are:
 
 ## Installation
 
+### On an AWS host
+
 * In the AWS console:
     * Create a new `t2.micro` (or whatever, but micro's plenty big) in
       `us-west-2` using `ami-d2c924b2`.
@@ -124,3 +126,19 @@ EOF
 23 0 * * * /home/centos/gh-snap/run_as_cronjob snap
 46 4 * * * /home/centos/gh-snap/run_as_cronjob purge
 ```
+
+### Docker
+
+Build a container from the included `Dockerfile`.
+
+You may want to specify some or all of the following environment
+variables with -e when you do a `docker run`:
+
+`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`, 
+`AWS_DEFAULT_REGION`, `GITHUB_ORGS`, `GITHUB_TOKEN`, `S3_BACKUP_BUCKET`
+
+The default command is to take a snapshot; use `snapshot-purger` as an
+appended command on the docker run command line to run a purge instead.
+
+You can also just pull the image with `docker pull
+lsstsqre/github-snapshot`.
