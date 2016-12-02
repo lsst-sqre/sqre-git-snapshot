@@ -1,6 +1,6 @@
 FROM centos:7
 MAINTAINER sqre-admin
-LABEL version="0.2.0" description="LSST DM/SQuaRE GitHub snapshot tools" \
+LABEL version="0.2.1" description="LSST DM/SQuaRE GitHub snapshot tools" \
       name="lsstsqre/github-snapshot"
 
 USER root
